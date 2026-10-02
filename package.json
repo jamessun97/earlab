@@ -1,0 +1,1 @@
+{"name":"earlab","private":true,"type":"module","scripts":{"build":"node build.mjs","db:generate":"drizzle-kit generate","dev":"wrangler dev --config dist/server/wrangler.json --port 4174","test":"node --test tests/*.test.mjs"},"dependencies":{"drizzle-orm":"^0.44.5"},"devDependencies":{"drizzle-kit":"^0.31.4","esbuild":"^0.25.10","wrangler":"^4.43.0"}}

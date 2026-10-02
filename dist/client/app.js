@@ -1,0 +1,110 @@
+const $=id=>document.getElementById(id);
+const modes=['interval','pitch','chord','rhythm'];
+const meta={pitch:{name:'音高記憶',q:'這個音，是哪一個音符？',instruction:'先聽參考音 C4，再聽題目，辨認音高。',tip:'以 C4 為起點，先在心裡唱出音階，再找出題目音的位置。'},interval:{name:'音程辨識',q:'這兩個音，相距多少？',instruction:'聆聽依序播放的兩個音，選出你聽到的音程。',tip:'先感受兩個音之間的距離，再試著為它命名。重聽時，輕輕哼出旋律。'},chord:{name:'和弦色彩',q:'你聽到了哪一種和弦？',instruction:'聆聽同時響起的音符，辨認和弦的色彩。',tip:'大三和弦通常明亮，小三和弦較柔和；減三和弦緊繃，增三和弦帶有懸浮感。'},rhythm:{name:'節奏感知',q:'哪個節奏，和你聽到的一樣？',instruction:'先聽四拍預備拍，再聽節奏。每個 ● 是一次發聲。',tip:'先跟著預備拍在心裡數 1、2、3、4。每一組符號代表一拍，· 表示沒有發聲。'}};
+const pitchNames=['C','D','E','F','G','A','B'], pitchMidi=[60,62,64,65,67,69,71];
+const intervals=[{n:'大二度',s:2,t:'相距 2 個半音，像音階中相鄰的兩個音。'},{n:'大三度',s:4,t:'相距 4 個半音，是大三和弦的明亮色彩。'},{n:'完全四度',s:5,t:'相距 5 個半音，試著記住它向上延伸的感覺。'},{n:'完全五度',s:7,t:'相距 7 個半音，聲音穩定而開闊。'},{n:'小三度',s:3,t:'相距 3 個半音，是小三和弦的柔和色彩。'},{n:'完全八度',s:12,t:'相距 12 個半音，兩個音的音名相同。'}];
+const chords=[{n:'大三和弦',s:[0,4,7],t:'根音＋大三度＋完全五度，聲音明亮。'},{n:'小三和弦',s:[0,3,7],t:'根音＋小三度＋完全五度，聲音柔和。'},{n:'減三和弦',s:[0,3,6],t:'根音＋小三度＋減五度，帶有緊張感。'},{n:'增三和弦',s:[0,4,8],t:'根音＋大三度＋增五度，帶有懸浮感。'}];
+const rhythms=[{n:'● ·｜● ·｜● ·｜● ·',s:[0,1,2,3],t:'每一拍發聲一次，共四個四分音符。'},{n:'● ●｜● ·｜● ●｜● ·',s:[0,.5,1,2,2.5,3],t:'第一、三拍各有兩個八分音符，其餘每拍發聲一次。'},{n:'● ·｜● ●｜● ·｜● ●',s:[0,1,1.5,2,3,3.5],t:'第二、四拍各有兩個八分音符，其餘每拍發聲一次。'},{n:'● ·｜· ·｜● ●｜● ·',s:[0,2,2.5,3],t:'第二拍休止，第三拍有兩個八分音符。'}];
+const localDate=(d=new Date())=>`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+const levels={beginner:{name:'初階',description:'自然音、基本音程、大小三和弦與簡單節奏'},intermediate:{name:'中階',description:'完整自然音、六種音程、四種三和弦與休止拍'},advanced:{name:'進階',description:'十二半音、完整音程、七和弦與十六分節奏'}};
+const advancedIntervals=[{n:'小二度',s:1,t:'相距 1 個半音，是最小的音程距離。'},...intervals,{n:'三全音',s:6,t:'相距 6 個半音，帶有明顯的張力。'},{n:'小六度',s:8,t:'相距 8 個半音，試著與大六度比較。'},{n:'大六度',s:9,t:'相距 9 個半音，比小六度寬一個半音。'},{n:'小七度',s:10,t:'相距 10 個半音，距離八度還差一個全音。'},{n:'大七度',s:11,t:'相距 11 個半音，距離八度只差一個半音。'}];
+const advancedChords=[...chords,{n:'大七和弦',s:[0,4,7,11],t:'大三和弦加上大七度，明亮且帶有柔和張力。'},{n:'小七和弦',s:[0,3,7,10],t:'小三和弦加上小七度，柔和而飽滿。'},{n:'屬七和弦',s:[0,4,7,10],t:'大三和弦加上小七度，帶有想要解決的張力。'},{n:'半減七和弦',s:[0,3,6,10],t:'減三和弦加上小七度，聆聽減五度的緊繃感。'}];
+const advancedRhythms=[
+ {n:'● ● ● ●｜● · · ·｜● ● ● ●｜● · · ·',s:[0,.25,.5,.75,1,2,2.25,2.5,2.75,3],t:'第一、三拍各有四個十六分音符。'},
+ {n:'● · ● ·｜● ● ● ●｜● · ● ·｜● ● ● ●',s:[0,.5,1,1.25,1.5,1.75,2,2.5,3,3.25,3.5,3.75],t:'第一、三拍各有兩個八分音符；第二、四拍各有四個十六分音符。'},
+ {n:'● · · ●｜● · ● ·｜● · · ●｜● · ● ·',s:[0,.75,1,1.5,2,2.75,3,3.5],t:'第一、三拍在拍頭與最後一個十六分位置發聲。'},
+ {n:'● · ● ●｜● · · ·｜● · ● ●｜● · · ·',s:[0,.5,.75,1,2,2.5,2.75,3],t:'第一、三拍在拍頭、半拍與最後一個十六分位置發聲。'}];
+const today=localDate();let data;
+data=EarSync.boot();
+if(!data||!data.days||!data.stats)data={days:{},stats:Object.fromEntries(modes.map(m=>[m,{total:0,correct:0}]))};
+// Keep the original storage key so existing progress survives this update.
+data.preferences??={level:'intermediate'};
+if(!levels[data.preferences.level])data.preferences.level='intermediate';
+data.mistakes??=[];
+const clone=q=>JSON.parse(JSON.stringify(q));
+const shuffle=(a,r=Math.random)=>{const result=a.slice();for(let i=result.length-1;i>0;i--){const j=Math.floor(r()*(i+1));[result[i],result[j]]=[result[j],result[i]]}return result};
+function makeQuestion(mode,r=Math.random,level=data.preferences.level){
+ const hard=level==='advanced',easy=level==='beginner';let pool,answer,notes,detail,opts;
+ if(mode==='pitch'){
+  pool=hard?['C','C♯','D','D♯','E','F','F♯','G','G♯','A','A♯','B']:easy?['C','D','E','G','A']:pitchNames;
+  const midi=hard?Array.from({length:12},(_,i)=>60+i):easy?[60,62,64,67,69]:pitchMidi;
+  const i=Math.floor(r()*pool.length);answer=pool[i];notes=[midi[i]];detail=`${answer}4：從 C4 向上 ${midi[i]-60} 個半音。可以再聽參考音比較。`;
+ }else if(mode==='interval'){
+  const list=hard?advancedIntervals:easy?intervals.slice(0,4):intervals,v=list[Math.floor(r()*list.length)],root=easy?60:55+Math.floor(r()*8);
+  pool=list.map(x=>x.n);answer=v.n;notes=[root,root+v.s];detail=v.t;
+ }else if(mode==='chord'){
+  const list=hard?advancedChords:easy?chords.slice(0,2):chords,v=list[Math.floor(r()*list.length)],root=easy?48:48+Math.floor(r()*8);
+  pool=list.map(x=>x.n);answer=v.n;notes=v.s.map(x=>root+x);detail=v.t;
+ }else{
+  const list=hard?advancedRhythms:easy?rhythms.slice(0,2):rhythms,v=list[Math.floor(r()*list.length)];pool=list.map(x=>x.n);answer=v.n;notes=v.s;detail=v.t;
+ }
+ opts=shuffle([answer,...shuffle(pool.filter(n=>n!==answer),r).slice(0,3)],r);
+ return {mode,opts,answer,notes,detail,level};
+}
+function generateDaily(level){let seed=[...today+level].reduce((a,c)=>Math.imul(a,31)+c.charCodeAt(0),1)>>>0;const r=()=>{seed=(Math.imul(seed,1664525)+1013904223)>>>0;return seed/4294967296};return Array.from({length:12},(_,i)=>makeQuestion(modes[i%4],r,level))}
+// Reconstruct legacy daily questions with the previous random sequence.
+function legacyDaily(){let seed=[...today].reduce((a,c)=>a*31+c.charCodeAt(0),1)>>>0;const r=()=>{seed=(Math.imul(seed,1664525)+1013904223)>>>0;return seed/4294967296};const oldShuffle=a=>a.slice().sort(()=>r()-.5);return Array.from({length:12},(_,i)=>{
+ const mode=modes[i%4],n=Math.floor(r()*(mode==='pitch'?7:mode==='interval'?intervals.length:4));let answer,notes,detail,opts;
+ if(mode==='pitch'){answer=pitchNames[n];opts=oldShuffle([answer,...oldShuffle(pitchNames.filter(x=>x!==answer)).slice(0,3)]);notes=[pitchMidi[n]];detail=`${answer}4：從 C4 向上 ${pitchMidi[n]-60} 個半音。可以再聽參考音比較。`}
+ if(mode==='interval'){const v=intervals[n],root=55+Math.floor(r()*8);answer=v.n;opts=oldShuffle([answer,...oldShuffle(intervals.filter(x=>x.n!==answer)).slice(0,3).map(x=>x.n)]);notes=[root,root+v.s];detail=v.t}
+ if(mode==='chord'){const v=chords[n],root=48+Math.floor(r()*8);answer=v.n;opts=oldShuffle(chords.map(x=>x.n));notes=v.s.map(x=>root+x);detail=v.t}
+ if(mode==='rhythm'){const v=rhythms[n];answer=v.n;opts=oldShuffle(rhythms.map(x=>x.n));notes=v.s;detail=v.t}
+ return {mode,answer,notes,detail,opts,level:'intermediate'};
+ })}
+if(!data.days[today])data.days[today]={answers:[],level:data.preferences.level,questions:generateDaily(data.preferences.level)};
+let day=data.days[today];
+if(!day.questions){day.level=day.answers.length?'intermediate':data.preferences.level;day.questions=day.answers.length?legacyDaily():generateDaily(day.level)}
+let selectedMode='daily',index=day.answers.length,session=[],sessionAnswers=[],question,answered=false,heard=false,playing=false,ctx,playTimer,audioGeneration=0;let volume=.5,tone='triangle';
+const activeQuestions=()=>selectedMode==='daily'?day.questions:session;
+const activeAnswers=()=>selectedMode==='daily'?day.answers:sessionAnswers;
+const questionKey=q=>[q.mode,q.answer,q.notes.join(',')].join('|');
+function saveMistake(q){const key=questionKey(q);let entry=data.mistakes.find(x=>x.id===key);if(entry){entry.streak=0;entry.misses++;entry.lastWrong=today}else{data.mistakes.push({id:key,question:clone(q),streak:0,misses:1,lastWrong:today})}}
+function updateDifficulty(){const level=data.preferences.level;$('difficulty').value=level;$('difficulty-description').textContent=levels[level].description;
+ $('difficulty-note').textContent=selectedMode==='review'?'複習保留原題的難度與聲音；答對兩次後移出清單。':selectedMode==='daily'&&day.answers.length?`今日題組：${levels[day.level].name}。${level!==day.level?'新難度套用於單項練習與明日題組。':'已開始的每日題組會保留，方便接續練習。'}`:'難度會調整題目範圍；單項練習切換後會開始新的一組。';
+}
+const wave=document.querySelector('.wave');for(let i=0;i<37;i++){const el=document.createElement('i');el.style.height=`${5+Math.sin(i*.7)**2*19}px`;el.style.animationDelay=`${i*.025}s`;wave.appendChild(el)}
+$('date').textContent=new Intl.DateTimeFormat('zh-TW',{month:'long',day:'numeric',weekday:'long'}).format(new Date());
+function persist(){EarSync.ensureDay(today,day);}
+function updateStats(){$('review-tab-count').textContent=data.mistakes.length;$('review-count').textContent=data.mistakes.length;$('start-review').disabled=!data.mistakes.length;$('review-note').textContent=data.mistakes.length?'每次最多複習 12 題，答錯的題目會保留。':'更新後的錯題會自動加入。';const entries=Object.values(data.stats),total=entries.reduce((a,s)=>a+s.total,0),correct=entries.reduce((a,s)=>a+s.correct,0),completed=data.days[today].answers.length;
+ $('total').textContent=total;$('accuracy').textContent=total?`${Math.round(correct/total*100)}%`:'—';$('today-count').textContent=completed;$('daily-progress').style.width=`${completed/12*100}%`;$('daily-message').textContent=completed===12?'今日練習完成，明天再來聽聽。':completed?`已完成 ${completed} 題，繼續保持。`:'今天的練習，從第一個音開始。';
+ $('skill-stats').innerHTML=modes.map(m=>{const s=data.stats[m],p=s.total?Math.round(s.correct/s.total*100):0;return `<div class="skill-row"><span>${{pitch:'音高',interval:'音程',chord:'和弦',rhythm:'節奏'}[m]}</span><div class="skill-track"><i style="width:${p}%"></i></div><b>${s.total?p+'%':'—'}</b></div>`}).join('');
+ const start=new Date();start.setDate(start.getDate()-((start.getDay()+6)%7));$('week').innerHTML=Array.from({length:7},(_,i)=>{const d=new Date(start);d.setDate(d.getDate()+i);const k=localDate(d),done=data.days[k]?.answers.length===12;return `<div><div class="day-label">${['一','二','三','四','五','六','日'][i]}</div><div class="day-circle ${k===today?'current':''} ${done?'done':''}" aria-label="${k}${done?' 已完成':''}">${done?'✓':d.getDate()}</div></div>`}).join('');
+ let streak=0,d=new Date();if(data.days[today].answers.length<12)d.setDate(d.getDate()-1);while(data.days[localDate(d)]?.answers.length===12){streak++;d.setDate(d.getDate()-1)}$('streak').textContent=`${streak} 天`;
+}
+function stopAudio(){audioGeneration++;if(ctx){ctx.close();ctx=null}clearTimeout(playTimer);playing=false;$('play').classList.remove('playing');wave.classList.remove('playing');$('play-symbol').textContent='▶';$('play').disabled=false}
+function render(){stopAudio();answered=false;heard=false;question=null;$('feedback').textContent='';$('next').disabled=true;updateDifficulty();const questions=activeQuestions(),answers=activeAnswers(),length=questions.length;
+ if(index>=length){const empty=selectedMode==='review'&&!length;$('type').textContent=empty?'錯題複習':selectedMode==='review'?'複習完成':'練習完成';$('count').textContent=`${length} / ${length}`;$('progress').style.width=length?'100%':'0%';$('question').textContent=empty?'目前沒有待複習的錯題。':selectedMode==='review'?'再聽一次，記得更清楚。':'把今天聽到的，留在耳朵裡。';$('instruction').textContent=empty?'完成每日或單項練習後，答錯的題目會自動收進這裡。':`你已完成這組 ${length} 題${selectedMode==='review'?'複習':'練習'}。`;$('question-label').textContent=empty?'REVIEW & REMEMBER':'WELL DONE';$('play').hidden=true;$('listen-caption').textContent=empty?'每個錯題，都是下一次進步的起點。':'小小的練習，累積成音樂直覺。';document.querySelector('.audio-tools').hidden=true;wave.style.visibility='hidden';$('answers').innerHTML=empty?'':`<div class="summary" style="grid-column:1/-1"><strong>${answers.filter(x=>x.correct).length} / ${length}</strong><p>${selectedMode==='review'?`答對題數 · 還有 ${data.mistakes.length} 題待鞏固`:'答對題數 · 可切換上方頁籤，繼續單項練習'}</p></div>`;$('next').disabled=false;$('next').textContent=selectedMode==='review'?(data.mistakes.length?'再複習一組':'回到每日練習'):'再練一組';$('hint').textContent=selectedMode==='review'?'連續答對兩次，讓聲音留在記憶裡。':'每天回來，聽覺記憶會慢慢累積。';return}
+ question=questions[index];$('answers').classList.toggle('rhythm',question.mode==='rhythm');const m=meta[question.mode];$('type').textContent=`${selectedMode==='review'?'複習 · ':''}${m.name} · ${levels[question.level||'intermediate'].name}`;$('count').textContent=`${String(index+1).padStart(2,'0')} / ${length}`;$('progress').style.width=`${index/length*100}%`;$('question').textContent=m.q;$('instruction').textContent=question.mode==='rhythm'&&question.level==='advanced'?'先聽四拍預備拍，再聽節奏。每組四個位置各代表四分之一拍。':m.instruction;$('question-label').textContent=selectedMode==='review'?'REVIEW & REMEMBER':'LISTEN & RECOGNIZE';$('tip').textContent=m.tip;$('play').hidden=false;$('listen-caption').textContent='點擊播放 · 可重複聆聽';document.querySelector('.audio-tools').hidden=false;wave.style.visibility='visible';$('reference').hidden=question.mode!=='pitch';$('next').innerHTML=index===length-1?(selectedMode==='review'?'完成複習':'完成練習'):'下一題 <span>›</span>';$('hint').textContent='相信第一直覺，答錯也是進步的一部分。';$('answers').innerHTML=question.opts.map((a,i)=>`<button class="answer" data-answer="${i}" disabled><span class="key">${i+1}</span>${String(a).replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;')}</button>`).join('');document.querySelectorAll('.answer').forEach(b=>b.onclick=()=>answerQuestion(Number(b.dataset.answer)));
+}
+function note(midi,time,duration=.7,percussion=false){const oscillator=ctx.createOscillator(),gain=ctx.createGain();oscillator.type=percussion?'sine':tone;oscillator.frequency.setValueAtTime(percussion?800:440*2**((midi-69)/12),time);if(percussion)oscillator.frequency.exponentialRampToValueAtTime(180,time+.07);gain.gain.setValueAtTime(0,time);gain.gain.linearRampToValueAtTime(volume*(question?.mode==='chord'?.13:.25),time+.012);gain.gain.exponentialRampToValueAtTime(.001,time+duration);oscillator.connect(gain);gain.connect(ctx.destination);oscillator.start(time);oscillator.stop(time+duration+.03)}
+async function play(slow=false,reference=false){if(playing||!question)return;const generation=audioGeneration;playing=true;try{ctx=ctx||new (window.AudioContext||window.webkitAudioContext)();await ctx.resume();if(generation!==audioGeneration)return;$('play').disabled=true;$('play').classList.add('playing');wave.classList.add('playing');$('play-symbol').textContent='Ⅱ';$('listen-caption').textContent=reference?'參考音 C4':slow?'正在慢速播放…':'正在播放，仔細聆聽…';let end=1,now=ctx.currentTime+.06;
+ if(reference)note(60,now,.9);else if(question.mode==='rhythm'){const beat=slow?.9:question.level==='beginner'?.75:question.level==='advanced'?.5:.6;for(let i=0;i<4;i++)note(0,now+i*beat,.09,true);question.notes.forEach(t=>note(0,now+(4+t)*beat,.12,true));end=8*beat+.2}
+ else if(question.mode==='chord'){question.notes.forEach(n=>note(n,now,slow?1.6:1.1));end=slow?1.8:1.3}
+ else {const gap=slow?1.15:.8;question.notes.forEach((n,i)=>note(n,now+i*gap,slow?.95:.65));end=question.notes.length*gap+.1}
+ if(!reference){heard=true;if(!answered)document.querySelectorAll('.answer').forEach(b=>b.disabled=false)}
+ playTimer=setTimeout(()=>{playing=false;$('play').disabled=false;$('play').classList.remove('playing');wave.classList.remove('playing');$('play-symbol').textContent='▶';$('listen-caption').textContent='再聽一次，記住聲音的感覺。'},end*1000)
+ }catch{if(generation!==audioGeneration)return;stopAudio();$('feedback').textContent='無法播放聲音，請使用支援 Web Audio 的瀏覽器並重試。'}}
+function answerQuestion(i){if(answered||!heard||!question||!Number.isInteger(i)||i<0||i>=question.opts.length)return;answered=true;const chosen=question.opts[i],correct=chosen===question.answer;document.querySelectorAll('.answer').forEach((b,j)=>{b.disabled=true;if(question.opts[j]===question.answer)b.classList.add('correct');else if(j===i)b.classList.add('wrong')});let reviewMessage='';
+ if(selectedMode==='review'){
+  const entry=data.mistakes.find(x=>x.id===question.reviewId);
+  if(entry){if(correct){entry.streak++;if(entry.streak>=2){data.mistakes=data.mistakes.filter(x=>x.id!==entry.id);reviewMessage=' 已連續答對兩次，這題已移出複習清單。'}else reviewMessage=' 鞏固進度 1 / 2，下次再答對就能移出清單。'}else{entry.streak=0;entry.misses++;entry.lastWrong=today;reviewMessage=' 已保留在複習清單，下次再試一次。'}}
+ }else if(!correct){saveMistake(question);reviewMessage=' 已加入錯題複習。'}
+ $('feedback').textContent=`${correct?'✓ 答對了！':'再記住這個聲音。正確答案：'+question.answer+'。'} ${question.detail}${reviewMessage}`;$('next').disabled=false;EarSync.record({kind:'answer',date:today,practice:selectedMode,slot:selectedMode==='daily'?index:null,question:clone(question),correct});const stat=data.stats[question.mode];stat.total++;if(correct)stat.correct++;const result={correct,mode:question.mode};if(selectedMode==='daily')day.answers.push(result);else sessionAnswers.push(result);persist();updateStats();updateDifficulty();
+}
+function select(mode){selectedMode=mode;document.querySelectorAll('[role=tab]').forEach(b=>{const active=b.dataset.mode===mode;b.classList.toggle('active',active);b.setAttribute('aria-selected',active)});if(mode==='daily')index=day.answers.length;else{index=0;sessionAnswers=[];session=mode==='review'?data.mistakes.slice().sort((a,b)=>a.lastWrong.localeCompare(b.lastWrong)||b.misses-a.misses).slice(0,12).map(e=>({...clone(e.question),opts:shuffle(e.question.opts),reviewId:e.id})):Array.from({length:12},()=>makeQuestion(mode))}render()}
+$('difficulty').onchange=e=>{data.preferences.level=e.target.value;EarSync.record({kind:'difficulty',level:data.preferences.level});if(!day.answers.length){day.level=data.preferences.level;day.questions=generateDaily(day.level)}persist();if(selectedMode==='review')updateDifficulty();else select(selectedMode)};
+$('start-review').onclick=()=>{select('review');document.querySelector('.practice').scrollIntoView({behavior:'smooth',block:'start'})};
+$('play').onclick=()=>play();$('slow').onclick=()=>play(true);$('reference').onclick=()=>play(false,true);$('next').onclick=()=>{if(index>=activeQuestions().length){select(selectedMode==='review'&&!data.mistakes.length?'daily':selectedMode==='daily'?'interval':selectedMode);return}index=selectedMode==='daily'?day.answers.length:index+1;render()};document.querySelectorAll('[data-mode]').forEach(b=>b.onclick=()=>select(b.dataset.mode));document.querySelectorAll('[data-category]').forEach(b=>b.onclick=()=>{select(b.dataset.category);document.querySelector('.practice').scrollIntoView({behavior:'smooth',block:'start'})});$('sound').onclick=()=>$('settings').showModal();$('volume').oninput=e=>volume=Number(e.target.value);$('tone').onchange=e=>tone=e.target.value;document.addEventListener('keydown',e=>{if($('settings').open||['INPUT','SELECT','BUTTON'].includes(document.activeElement.tagName))return;if(['1','2','3','4'].includes(e.key))answerQuestion(Number(e.key)-1);if(e.code==='Space'){e.preventDefault();play()}});persist();updateStats();select('daily');
+EarSync.start(function(updated){
+ data=updated;
+ if(!data.days[today])data.days[today]={answers:[],level:data.preferences.level,questions:generateDaily(data.preferences.level)};
+ day=data.days[today];if(!day.questions){day.level=day.level||'intermediate';day.questions=day.answers.length?legacyDaily():generateDaily(day.level)}
+ persist();updateStats();updateDifficulty();if(selectedMode==='daily'&&!answered&&!playing){index=day.answers.length;render()}
+});
+if(document.modelContext?.registerTool){
+ const lifecycle=new AbortController();
+ const register=tool=>{try{Promise.resolve(document.modelContext.registerTool(tool,{signal:lifecycle.signal})).catch(()=>{})}catch{}};
+ register({name:'read_practice_progress',description:'Read the current practice category and locally stored listening progress.',inputSchema:{type:'object',properties:{},additionalProperties:false},annotations:{readOnlyHint:true},execute:()=>({mode:selectedMode,question:Math.min(index+1,12),dailyCompleted:data.days[today].answers.length,difficulty:data.preferences.level,pendingReview:data.mistakes.length,stats:JSON.parse(JSON.stringify(data.stats))})});
+ register({name:'start_practice',description:'Switch to daily practice or start a new 12-question practice session in one listening category.',inputSchema:{type:'object',properties:{mode:{type:'string',enum:['daily','pitch','interval','chord','rhythm','review']}},required:['mode'],additionalProperties:false},annotations:{readOnlyHint:false},execute:input=>{if(!input||!['daily','review',...modes].includes(input.mode))throw new Error('Invalid practice mode');select(input.mode);return {mode:selectedMode,question:Math.min(index+1,12),completed:index>=activeQuestions().length}}});
+ window.addEventListener('pagehide',()=>lifecycle.abort(),{once:true});
+}
