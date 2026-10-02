@@ -41,5 +41,6 @@ async function sync(){if(busy)return;if(!navigator.onLine){status('離線待同�
 function start(callback){apply=callback;document.getElementById('sync-now').onclick=sync;document.getElementById('account-button').onclick=()=>document.getElementById('account-dialog').showModal();document.getElementById('signout-link').onclick=()=>{try{localStorage.removeItem('earlab-sync-active')}catch{}};status('準備同步','登入同一個 ChatGPT 帳號即可跨裝置接續。');sync();window.addEventListener('online',sync);window.addEventListener('offline',()=>status('離線待同步','可以繼續練習；恢復連線後會自動同步。'));document.addEventListener('visibilitychange',()=>{if(!document.hidden)sync()});setInterval(()=>{if(!document.hidden&&navigator.onLine)sync()},30000);
  if('serviceWorker' in navigator)navigator.serviceWorker.register('/sw.js').catch(()=>status('離線快取未完成','雲端同步仍可使用；首次載入請保持網路連線。'));
 }
-root.EarSync={boot,record,ensureDay,start,sync};
+function recentQuestions(mode,level){return Object.values(journal.events).filter(e=>e.kind==='answer'&&e.question.mode===mode&&e.question.level===level).sort((a,b)=>b.at-a.at).slice(0,60).map(e=>root.EarQuestionBank.key(e.question))}
+root.EarSync={boot,record,ensureDay,start,sync,recentQuestions};
 })(globalThis);
