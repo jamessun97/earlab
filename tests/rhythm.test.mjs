@@ -1,0 +1,5 @@
+import test from 'node:test';import assert from 'node:assert/strict';import '../public/rhythm-bank.js';
+const r=globalThis.RhythmTraining;
+test('all difficulty levels provide twelve different rhythms per practice set',()=>{for(const level of Object.keys(r.pools)){for(const random of [Math.random,()=>0,()=>.999]){const set=r.sequence(level,12,random);assert.equal(set.length,12);assert.equal(new Set(set.map(x=>x.s.join(','))).size,12)}}});
+test('answer symbols match the audio onset positions exactly',()=>{for(const [level,pool] of Object.entries(r.pools)){const subdivision=level==='advanced'?4:2;for(const p of pool){const positions=[];p.n.split('｜').forEach((group,beat)=>group.split(' ').forEach((symbol,i)=>{if(symbol==='●')positions.push(beat+i/subdivision)}));assert.deepEqual(positions,p.s);assert(p.s.every(t=>t>=0&&t<4));assert.equal(new Set(p.s).size,p.s.length)}}});
+test('large sessions shuffle without repeating the last rhythm at bag boundaries',()=>{for(const level of Object.keys(r.pools)){const set=r.sequence(level,100,()=>0);for(let i=1;i<set.length;i++)assert.notDeepEqual(set[i].s,set[i-1].s)}});
