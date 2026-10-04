@@ -1,3 +1,4 @@
+import '../public/mixing.js';
 import '../public/sync-core.js';
 const core=globalThis.EarSyncCore;
 const SITE_ORIGIN='https://earlab-daily-listening.dkoeo.chatgpt.site';

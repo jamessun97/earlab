@@ -1,4 +1,4 @@
-import test from 'node:test';import assert from 'node:assert/strict';import '../public/rhythm-bank.js';import '../public/question-bank.js';import '../public/sync-core.js';
+import test from 'node:test';import assert from 'node:assert/strict';import '../public/rhythm-bank.js';import '../public/question-bank.js';import '../public/mixing.js';import '../public/sync-core.js';
 const bank=globalThis.EarQuestionBank,core=globalThis.EarSyncCore;
 const modes=['pitch','interval','chord','rhythm'],levels=['beginner','intermediate','advanced'];
 test('all categories and levels have ample distinct playable questions',()=>{for(const level of levels)for(const mode of modes){const pool=bank.pools[level][mode];assert(pool.length>=14);assert.equal(new Set(pool.map(bank.key)).size,pool.length);for(const q of pool){assert(q.notes.every(n=>Number.isFinite(n)&&n>=0&&n<=127));const j=core.empty();j.events.answer_01={id:'answer_01',kind:'answer',date:'2026-10-02',at:1,practice:mode,question:{...q,opts:[q.answer,'其他答案']},correct:true};assert(core.validate(j))}}});

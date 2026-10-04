@@ -1,8 +1,8 @@
 (function(root){
-const modes=['interval','pitch','chord','rhythm'];
+const musicalModes=['interval','pitch','chord','rhythm'];const modes=[...musicalModes,...MixingTraining.modes];
 const copy=x=>JSON.parse(JSON.stringify(x));
 const empty=()=>({schema:1,imports:{},events:{}});
-const key=q=>[q.mode,q.answer,q.notes.join(',')].join('|');
+const key=q=>q.mix?MixingTraining.key(q):[q.mode,q.answer,q.notes.join(',')].join('|');
 function merge(a,b){return {schema:1,imports:{...a.imports,...b.imports},events:{...a.events,...b.events}}}
 function project(journal){
  const data={days:{},stats:Object.fromEntries(modes.map(m=>[m,{total:0,correct:0}])),mistakes:[],preferences:{level:'intermediate'}};
@@ -28,7 +28,7 @@ function project(journal){
  }
  data.mistakes=[...bank.values()];return data;
 }
-function validQuestion(q){return q&&modes.includes(q.mode)&&['beginner','intermediate','advanced'].includes(q.level||'intermediate')&&Array.isArray(q.notes)&&q.notes.length>=1&&q.notes.length<=16&&q.notes.every(n=>Number.isFinite(n)&&n>=0&&n<=127)&&Array.isArray(q.opts)&&q.opts.length>=2&&q.opts.length<=4&&q.opts.every(s=>typeof s==='string'&&s.length<=120&&!/[<>]/.test(s))&&q.opts.includes(q.answer)&&typeof q.detail==='string'&&q.detail.length<=500}
+function validQuestion(q){return q&&modes.includes(q.mode)&&(!MixingTraining.modes.includes(q.mode)||MixingTraining.valid(q))&&['beginner','intermediate','advanced'].includes(q.level||'intermediate')&&Array.isArray(q.notes)&&q.notes.length>=1&&q.notes.length<=16&&q.notes.every(n=>Number.isFinite(n)&&n>=0&&n<=127)&&Array.isArray(q.opts)&&q.opts.length>=2&&q.opts.length<=4&&q.opts.every(s=>typeof s==='string'&&s.length<=120&&!/[<>]/.test(s))&&q.opts.includes(q.answer)&&typeof q.detail==='string'&&q.detail.length<=500}
 const date=s=>typeof s==='string'&&/^\d{4}-\d{2}-\d{2}$/.test(s);
 const count=n=>Number.isSafeInteger(n)&&n>=0&&n<=100000000;
 function validate(j){
@@ -36,7 +36,7 @@ function validate(j){
  const items=Object.entries(j.imports),events=Object.entries(j.events);if(items.length>100||events.length>10000)return false;
  const record=(id,x)=>/^[a-zA-Z0-9_-]{8,80}$/.test(id)&&x&&x.id===id&&Number.isSafeInteger(x.at)&&x.at>=0;
  for(const [id,x] of items){if(!record(id,x)||!x.data?.stats||!x.data?.days)return false;
-  for(const m of modes){const s=x.data.stats[m];if(!s||!count(s.total)||!count(s.correct)||s.correct>s.total)return false}
+  for(const m of modes){const s=x.data.stats[m];if(!s&&!musicalModes.includes(m))continue;if(!s||!count(s.total)||!count(s.correct)||s.correct>s.total)return false}
   if(!['beginner','intermediate','advanced'].includes(x.data.preferences?.level||'intermediate'))return false;
   for(const [d,day] of Object.entries(x.data.days)){if(!date(d)||!Array.isArray(day.answers)||day.answers.length>12||!day.answers.every(a=>a&&modes.includes(a.mode)&&typeof a.correct==='boolean')||day.questions&&(!Array.isArray(day.questions)||day.questions.length!==12||!day.questions.every(validQuestion)))return false}
   if(!Array.isArray(x.data.mistakes||[])||(x.data.mistakes||[]).some(e=>!validQuestion(e.question)||e.id!==key(e.question)||!count(e.misses)||![0,1].includes(e.streak)||!date(e.lastWrong)))return false;

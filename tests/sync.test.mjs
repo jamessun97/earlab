@@ -1,4 +1,4 @@
-import test from 'node:test';import assert from 'node:assert/strict';import '../public/sync-core.js';
+import test from 'node:test';import assert from 'node:assert/strict';import '../public/mixing.js';import '../public/sync-core.js';
 const c=globalThis.EarSyncCore;
 const q={mode:'interval',level:'intermediate',notes:[60,64],opts:['大三度','大二度'],answer:'大三度',detail:'相距四個半音'};
 const event=(id,correct,at,practice='interval')=>({id,kind:'answer',date:'2026-10-02',practice,question:q,correct,at});
