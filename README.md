@@ -10,4 +10,4 @@ Progress uses an idempotent event journal and compare-and-swap database revision
 
 The browser must visit the online app once to install the offline shell. The account panel reports pending changes and offers a manual retry. Cloud sync starts automatically on page load, reconnect, and return to the page.
 
-Mixing practice uses deterministic three-second synthesized drum, bass and harmony clips. A/B pairs share the same source. EQ and compression pairs use RMS matching; gain pairs preserve the specified dB ratio, and panning uses equal-power stereo. Both full samples must be heard before answering. Mixing categories persist through the same authenticated sync journal, including exact effect parameters in review IDs.
+Mixing practice uses deterministic three-second synthesized drum, bass and harmony clips. A/B pairs share the same source. EQ and compression pairs use RMS matching; gain pairs preserve the specified dB ratio, and panning uses equal-power stereo. Mixing answers become available as soon as either A or B starts playing. Mixing categories persist through the same authenticated sync journal, including exact effect parameters in review IDs.
