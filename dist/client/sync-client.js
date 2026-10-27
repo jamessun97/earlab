@@ -42,5 +42,6 @@ function start(callback){apply=callback;document.getElementById('sync-now').oncl
  if('serviceWorker' in navigator)navigator.serviceWorker.register('/sw.js').catch(()=>status('離線快取未完成','雲端同步仍可使用；首次載入請保持網路連線。'));
 }
 function recentQuestions(mode,level){return Object.values(journal.events).filter(e=>e.kind==='answer'&&e.question.mode===mode&&e.question.level===level).sort((a,b)=>b.at-a.at).slice(0,60).map(e=>(e.question.mix?root.MixingTraining:root.EarQuestionBank).key(e.question))}
-root.EarSync={boot,record,ensureDay,start,sync,recentQuestions};
+function history(){return Object.values(journal.events).filter(e=>e.kind==='answer').map(e=>core.copy(e))}
+root.EarSync={history,boot,record,ensureDay,start,sync,recentQuestions};
 })(globalThis);

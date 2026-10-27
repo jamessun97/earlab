@@ -1,0 +1,7 @@
+import test from 'node:test';import assert from 'node:assert/strict';import '../public/learning.js';
+const L=LearningInsights;
+const attempt=(mode,correct,at,date='2026-10-27')=>({kind:'answer',question:{mode},correct,at,date});
+test('empty history does not invent accuracy or weakness',()=>{const r=L.report([],new Date(2026,9,27));assert.equal(r.hasEvidence,false);assert(r.days.every(d=>d.total===0));assert.equal(L.focusPlan([]).length,12)});
+test('recent evidence chooses the weaker observed skill over untried skills',()=>{const e=[];for(let i=0;i<10;i++){e.push(attempt('eq',i<2,i));e.push(attempt('pitch',i<9,i+20))}const r=L.report(e,new Date(2026,9,27));assert.equal(r.recommendation,'eq');assert.equal(r.hasEvidence,true);assert.equal(L.focusPlan(e).filter(m=>m==='eq').length,6)});
+test('weakness uses the latest forty attempts rather than lifetime totals',()=>{const e=Array.from({length:60},(_,i)=>attempt('chord',i<20,i));assert.equal(L.report(e).recent.chord.total,40);assert.equal(L.report(e).recent.chord.correct,0)});
+test('seven-day activity crosses month boundaries and excludes undated imports',()=>{const e=[attempt('eq',true,1,'2026-09-30'),attempt('pitch',false,2,'2026-10-01'),{kind:'difficulty',at:3}];const r=L.report(e,new Date(2026,9,3));assert.equal(r.days[0].date,'2026-09-27');assert.equal(r.days.reduce((s,d)=>s+d.total,0),2);assert.equal(r.days.find(d=>d.date==='2026-10-01').correct,0)});

@@ -11,3 +11,5 @@ Progress uses an idempotent event journal and compare-and-swap database revision
 The browser must visit the online app once to install the offline shell. The account panel reports pending changes and offers a manual retry. Cloud sync starts automatically on page load, reconnect, and return to the page.
 
 Mixing practice uses deterministic three-second synthesized drum, bass and harmony clips. A/B pairs share the same source. EQ and compression pairs use RMS matching; gain pairs preserve the specified dB ratio, and panning uses equal-power stereo. Mixing answers become available as soon as either A or B starts playing. Mixing categories persist through the same authenticated sync journal, including exact effect parameters in review IDs.
+
+Learning tools: a targeted 12-question session allocates 6/4/2 questions across three skills, using up to 40 recent attempts per skill and a minimum of 5 attempts before evaluating weakness. Seven-day activity uses dated answer events, excludes undated legacy totals, and includes both music and mixing practice. Eight expandable knowledge cards link directly to practice; completed sessions show results by skill.

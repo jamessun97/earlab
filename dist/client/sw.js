@@ -1,5 +1,5 @@
-const CACHE='earlab-offline-v7';
-const SHELL=['/','/index.html','/style.css','/app.js','/sync-core.js','/sync-client.js','/rhythm-bank.js','/question-bank.js','/mixing.js'];
+const CACHE='earlab-offline-v8';
+const SHELL=['/','/index.html','/style.css','/app.js','/sync-core.js','/sync-client.js','/rhythm-bank.js','/question-bank.js','/mixing.js','/learning.js'];
 self.addEventListener('install',event=>event.waitUntil(caches.open(CACHE).then(cache=>cache.addAll(SHELL)).then(()=>self.skipWaiting())));
 self.addEventListener('activate',event=>event.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(k=>k.startsWith('earlab-offline-')&&k!==CACHE).map(k=>caches.delete(k)))).then(()=>self.clients.claim())));
 self.addEventListener('fetch',event=>{
